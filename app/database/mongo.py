@@ -1,6 +1,7 @@
 """MongoDB connection and article persistence."""
 from typing import List
 
+import certifi
 from pymongo import MongoClient, ASCENDING
 from pymongo.database import Database
 from pymongo.collection import Collection
@@ -14,7 +15,12 @@ _client: MongoClient | None = None
 def get_client() -> MongoClient:
     global _client
     if _client is None:
-        _client = MongoClient(MONGO_URI)
+        # Use certifi CA bundle so SSL/TLS works on Render and other cloud runtimes
+        _client = MongoClient(
+            MONGO_URI,
+            tlsCAFile=certifi.where(),
+            serverSelectionTimeoutMS=20000,
+        )
     return _client
 
 
