@@ -103,6 +103,20 @@ async def get_articles(
     )
 
 
+@router.get("/featured", response_model=List[ArticleResponse])
+async def get_featured_articles(limit: int = Query(3, ge=1, le=5, description="Number of featured articles")):
+    """Get 1–3 featured articles for homepage: 3 bài mới nhất (isShow=True)."""
+    col = get_articles_collection()
+    query = {"isShow": True}
+    cursor = col.find(query).sort("published", -1).limit(limit)
+    articles = []
+    for doc in cursor:
+        doc["id"] = str(doc["_id"])
+        doc.pop("_id", None)
+        articles.append(ArticleResponse(**doc))
+    return articles
+
+
 @router.get("/articles/{article_id}")
 async def get_article_by_id(article_id: str):
     """Get single article by MongoDB _id."""

@@ -19,6 +19,8 @@ let pageSizeSelect;
 let resultCount;
 let totalArticlesEl;
 let translatedArticlesEl;
+let featuredSection;
+let featuredGrid;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -26,6 +28,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderFilterSidebar('filterSidebarContainer');
     await loadFilterOptions({ category: currentCategory });
     initDomElements();
+    if (isHomeView()) {
+        await loadFeatured();
+    } else {
+        hideFeatured();
+    }
     loadArticles();
     setupEventListeners();
 });
@@ -43,6 +50,90 @@ function initDomElements() {
     resultCount = document.getElementById('resultCount');
     totalArticlesEl = document.getElementById('totalArticles');
     translatedArticlesEl = document.getElementById('translatedArticles');
+    featuredSection = document.getElementById('featuredSection');
+    featuredGrid = document.getElementById('featuredGrid');
+}
+
+function isHomeView() {
+    return !currentCategory && !currentSearch;
+}
+
+async function loadFeatured() {
+    if (!featuredSection || !featuredGrid) return;
+    try {
+        const response = await fetch('/api/featured?limit=3');
+        const articles = await response.json();
+        if (articles.length > 0) {
+            renderFeatured(articles);
+            featuredSection.classList.remove('hidden');
+        } else {
+            featuredSection.classList.add('hidden');
+        }
+    } catch (e) {
+        featuredSection.classList.add('hidden');
+    }
+}
+
+function hideFeatured() {
+    if (featuredSection) featuredSection.classList.add('hidden');
+}
+
+function renderFeatured(articles) {
+    if (!featuredGrid) return;
+    featuredGrid.innerHTML = '';
+    articles.forEach((article, index) => {
+        const card = createFeaturedCard(article, index);
+        featuredGrid.appendChild(card);
+    });
+}
+
+function createFeaturedCard(article, index) {
+    const div = document.createElement('div');
+    div.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer fade-in';
+    div.style.animationDelay = `${index * 80}ms`;
+    div.onclick = () => { window.location.href = '/article?id=' + encodeURIComponent(article.id); };
+
+    const displayTitle = article.title_vn || article.title;
+    const thumbnail = article.thumbnail || article.content_top_image || `https://picsum.photos/seed/${encodeURIComponent(displayTitle)}/400/240`;
+    const publishedDate = article.published ? new Date(article.published).toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    }) : '';
+    const sourceLabel = article.source || 'Unknown';
+    const categoryColor = getCategoryColor(article.category);
+    const summaryPlain = stripHtml(article.summary_vn || article.summary || '');
+
+    div.innerHTML = `
+        <div class="relative h-44 sm:h-52 overflow-hidden">
+            <img src="${thumbnail}" alt="${escapeHtml(displayTitle)}"
+                class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22240%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext fill=%22%239ca3af%22 font-family=%22sans-serif%22 font-size=%2216%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+            <div class="absolute top-3 left-3 flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${categoryColor}">
+                    ${escapeHtml(article.category)}
+                </span>
+            </div>
+            <div class="absolute top-3 right-3">
+                <span class="px-2.5 py-1 text-xs font-medium bg-black/60 text-white rounded-full">
+                    ${escapeHtml(sourceLabel)}
+                </span>
+            </div>
+        </div>
+        <div class="p-4 sm:p-5">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 leading-snug">
+                ${escapeHtml(displayTitle)}
+            </h3>
+            <p class="article-card-summary text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
+                ${escapeHtml(summaryPlain.slice(0, 120))}${summaryPlain.length > 120 ? '…' : ''}
+            </p>
+            <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+                <span>${publishedDate}</span>
+                <span class="flex items-center">Đọc tiếp →</span>
+            </div>
+        </div>
+    `;
+    return div;
 }
 
 // Apply search/filter from URL (e.g. when redirecting from article page)
@@ -75,6 +166,7 @@ function setupEventListeners() {
         if (searchInput) searchInput.value = '';
         if (searchInputMobile) searchInputMobile.value = '';
         updateUrlFromState();
+        if (!isHomeView()) hideFeatured();
         loadArticles();
     });
 
@@ -100,6 +192,7 @@ function setupEventListeners() {
         currentPage = 1;
         if (typeof setCategoryFilterValue === 'function') setCategoryFilterValue('');
         updateUrlFromState();
+        if (!isHomeView()) hideFeatured();
         loadArticles();
     };
     const searchBtn = document.getElementById('searchBtn');
@@ -118,6 +211,11 @@ function setupEventListeners() {
 
 // Load articles
 async function loadArticles() {
+    if (isHomeView() && featuredSection && featuredGrid) {
+        loadFeatured();
+    } else {
+        hideFeatured();
+    }
     showLoading();
 
     const params = new URLSearchParams({
@@ -225,8 +323,8 @@ function createArticleCard(article, index) {
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 leading-snug">
                 ${escapeHtml(displayTitle)}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
-                ${(article.summary_vn || article.summary || '')}
+            <p class="article-card-summary text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
+                ${escapeHtml(stripHtml(article.summary_vn || article.summary || ''))}
             </p>
             <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                 <span>${publishedDate}</span>
@@ -357,6 +455,14 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Strip HTML tags so summary_vn with <p>, <img> etc. shows as plain text (avoids float/layout affecting text in dark mode)
+function stripHtml(html) {
+    if (!html) return '';
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
 }
 
 // Strip markdown syntax for plain text display
