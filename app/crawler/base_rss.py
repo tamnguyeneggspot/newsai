@@ -1,7 +1,7 @@
 """Base RSS fetching logic."""
 import re
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Set
 import feedparser
 from urllib.request import Request, urlopen
 
@@ -55,7 +55,24 @@ def _source_from_url(url: str) -> str:
         return "reuters"
     if "nytimes" in url_lower or "nyt." in url_lower:
         return "nyt"
+    if "newatlas" in url_lower:
+        return "newatlas"
+    if "artificialintelligence-news" in url_lower:
+        return "ai-news"
+    if "zdnet" in url_lower:
+        return "zdnet"
     return "unknown"
+
+
+def take_first_new(articles: List[Article], existing_links: Set[str], n: int) -> List[Article]:
+    """Lấy tối đa n bài đầu tiên (theo thứ tự feed) mà link chưa có trong existing_links."""
+    out: List[Article] = []
+    for a in articles:
+        if len(out) >= n:
+            break
+        if a.link not in existing_links:
+            out.append(a)
+    return out
 
 
 def fetch_feed(url: str, category: str, source: Optional[str] = None, limit: Optional[int] = None) -> List[Article]:

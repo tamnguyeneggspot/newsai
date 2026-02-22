@@ -1,5 +1,5 @@
 """MongoDB connection and article persistence."""
-from typing import List
+from typing import List, Set
 
 import certifi
 from pymongo import MongoClient, ASCENDING
@@ -33,6 +33,17 @@ def get_articles_collection() -> Collection:
     # index for dedup / fast lookup by link
     col.create_index([("link", ASCENDING)], unique=True)
     return col
+
+
+def get_existing_links(links: List[str]) -> Set[str]:
+    """Return set of links that already exist in the articles collection."""
+    if not links:
+        return set()
+    col = get_articles_collection()
+    return set(
+        doc["link"]
+        for doc in col.find({"link": {"$in": links}}, {"link": 1})
+    )
 
 
 def save_article(article: Article) -> bool:

@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 
 from app.config import EXTRACT_CONTENT
-from app.crawler import crawl_bbc, crawl_reuters, crawl_crypto, crawl_nyt
+from app.crawler import crawl_bbc, crawl_reuters, crawl_crypto, crawl_nyt, crawl_robotics, crawl_ai
 from app.models import Article
 from app.database import save_articles, get_articles_collection
 from app.extractor import extract_content, extract_hero_image
@@ -12,12 +12,14 @@ from app.ai.translate_service import translate_title_and_summary
 
 
 def run_all_crawlers() -> int:
-    """Run BBC, Reuters, Crypto (and NYT if configured). Save to DB. Return total saved count."""
+    """Run BBC, Reuters, Crypto, Robotics, AI (and NYT if configured). Save to DB. Return total saved count."""
     articles: List[Article] = []
     articles.extend(crawl_bbc())
     articles.extend(crawl_reuters())
     articles.extend(crawl_crypto())
     articles.extend(crawl_nyt())
+    articles.extend(crawl_robotics())
+    articles.extend(crawl_ai())
 
     if EXTRACT_CONTENT:
         for article in articles:
