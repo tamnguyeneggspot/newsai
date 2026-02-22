@@ -17,7 +17,7 @@ function renderFooter(options) {
     const tagline = opts.tagline || document.body.dataset.footerTagline || 'Tin tức thông minh';
 
     const footerHtml = `
-    <footer class="bg-gray-900 text-gray-300 mt-12">
+    <footer class="bg-gray-900 dark:bg-black text-gray-300 mt-12 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-12 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                 <!-- Brand -->

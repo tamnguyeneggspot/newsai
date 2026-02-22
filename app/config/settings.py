@@ -25,6 +25,15 @@ RSS_FEEDS_BY_CATEGORY = {
     "Công nghệ": [
         "http://feeds.bbci.co.uk/news/technology/rss.xml",
     ],
+    "Khoa học & Môi trường": [
+        "http://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    ],
+    "Sức khỏe": [
+        "http://feeds.bbci.co.uk/news/health/rss.xml",
+    ],
+    "Thể thao": [
+        "http://feeds.bbci.co.uk/sport/rss.xml",
+    ],
     "Crypto": [
         "https://www.coindesk.com/arc/outboundfeeds/rss/",
         "https://cointelegraph.com/rss",
@@ -54,7 +63,7 @@ CRAWL_FETCH_WINDOW = int(os.getenv("CRAWL_FETCH_WINDOW", "60"))
 EXTRACT_CONTENT = os.getenv("EXTRACT_CONTENT", "true").lower() in ("1", "true", "yes")
 
 # Ollama settings for translation
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:cloud")
 ENABLE_TRANSLATION = os.getenv("ENABLE_TRANSLATION", "true").lower() in ("1", "true", "yes")
 

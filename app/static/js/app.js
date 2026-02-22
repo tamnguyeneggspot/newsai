@@ -56,11 +56,25 @@ function applyParamsFromUrl() {
     if (searchInputMobile) searchInputMobile.value = search;
 }
 
+// Sync URL with current filter state (clear search from URL when user selects category)
+function updateUrlFromState() {
+    const params = new URLSearchParams();
+    if (currentCategory) params.set('category', currentCategory);
+    if (currentSearch) params.set('search', currentSearch);
+    const query = params.toString();
+    const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+    window.history.replaceState({}, '', url);
+}
+
 // Setup event listeners
 function setupEventListeners() {
     categoryFilter.addEventListener('change', () => {
         currentCategory = categoryFilter.value;
+        currentSearch = '';
         currentPage = 1;
+        if (searchInput) searchInput.value = '';
+        if (searchInputMobile) searchInputMobile.value = '';
+        updateUrlFromState();
         loadArticles();
     });
 
@@ -82,7 +96,10 @@ function setupEventListeners() {
 
     const doSearch = () => {
         currentSearch = (searchInput && searchInput.value.trim()) || (searchInputMobile && searchInputMobile.value.trim()) || '';
+        currentCategory = '';
         currentPage = 1;
+        if (typeof setCategoryFilterValue === 'function') setCategoryFilterValue('');
+        updateUrlFromState();
         loadArticles();
     };
     const searchBtn = document.getElementById('searchBtn');
@@ -137,7 +154,7 @@ function showLoading() {
     
     for (let i = 0; i < pageSize; i++) {
         const skeleton = `
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="h-48 skeleton"></div>
                 <div class="p-5">
                     <div class="h-4 skeleton rounded mb-3 w-1/4"></div>
@@ -173,7 +190,7 @@ function renderArticles(articles) {
 // Create article card
 function createArticleCard(article, index) {
     const div = document.createElement('div');
-    div.className = 'bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 cursor-pointer fade-in';
+    div.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer fade-in';
     div.style.animationDelay = `${index * 50}ms`;
     div.onclick = () => { window.location.href = '/article?id=' + encodeURIComponent(article.id); };
 
@@ -205,13 +222,13 @@ function createArticleCard(article, index) {
             </div>
         </div>
         <div class="p-5">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 leading-snug">
                 ${escapeHtml(displayTitle)}
             </h3>
-            <p class="text-sm text-gray-600 line-clamp-3 mb-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
                 ${(article.summary_vn || article.summary || '')}
             </p>
-            <div class="flex items-center justify-between text-xs text-gray-400">
+            <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                 <span>${publishedDate}</span>
                 <span class="flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,13 +246,16 @@ function createArticleCard(article, index) {
 // Get category color
 function getCategoryColor(category) {
     const colors = {
-        'Tin thế giới': 'bg-blue-100 text-blue-700',
-        'Kinh tế': 'bg-emerald-100 text-emerald-700',
-        'Công nghệ': 'bg-purple-100 text-purple-700',
-        'Crypto': 'bg-orange-100 text-orange-700',
-        'Reuters World': 'bg-red-100 text-red-700',
+        'Tin thế giới': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+        'Kinh tế': 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
+        'Công nghệ': 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
+        'Khoa học & Môi trường': 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300',
+        'Sức khỏe': 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300',
+        'Thể thao': 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+        'Crypto': 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300',
+        'Reuters World': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
     };
-    return colors[category] || 'bg-gray-100 text-gray-700';
+    return colors[category] || 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300';
 }
 
 // Render pagination
@@ -246,7 +266,7 @@ function renderPagination() {
 
     // Previous button
     const prevBtn = document.createElement('button');
-    prevBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`;
+    prevBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === 1 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
     prevBtn.innerHTML = `
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -275,7 +295,7 @@ function renderPagination() {
         pagination.appendChild(createPageButton(1));
         if (startPage > 2) {
             const dots = document.createElement('span');
-            dots.className = 'px-2 py-2 text-gray-400';
+            dots.className = 'px-2 py-2 text-gray-400 dark:text-gray-500';
             dots.textContent = '...';
             pagination.appendChild(dots);
         }
@@ -288,7 +308,7 @@ function renderPagination() {
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             const dots = document.createElement('span');
-            dots.className = 'px-2 py-2 text-gray-400';
+            dots.className = 'px-2 py-2 text-gray-400 dark:text-gray-500';
             dots.textContent = '...';
             pagination.appendChild(dots);
         }
@@ -297,7 +317,7 @@ function renderPagination() {
 
     // Next button
     const nextBtn = document.createElement('button');
-    nextBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`;
+    nextBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === totalPages ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
     nextBtn.innerHTML = `
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -320,7 +340,7 @@ function createPageButton(page) {
     btn.className = `w-10 h-10 text-sm rounded-lg transition-colors ${
         page === currentPage 
             ? 'bg-blue-600 text-white font-medium' 
-            : 'text-gray-600 hover:bg-gray-100'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
     }`;
     btn.textContent = page;
     btn.onclick = () => {
@@ -361,8 +381,8 @@ function markdownToHtml(text) {
     let html = escapeHtml(text);
     
     // Convert headers (## and ###)
-    html = html.replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-gray-900 mt-5 mb-3">$1</h2>');
+    html = html.replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-5 mb-3">$1</h2>');
     
     // Convert bold **text**
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold">$1</strong>');

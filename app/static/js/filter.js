@@ -7,18 +7,18 @@
  */
 
 const FILTER_LIST_ITEM_BASE = 'block w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer border-l-2 border-transparent';
-const FILTER_LIST_ITEM_ACTIVE = 'bg-blue-50 text-blue-700 border-blue-600 font-medium';
-const FILTER_LIST_ITEM_INACTIVE = 'text-gray-700 hover:bg-gray-50 border-gray-100';
+const FILTER_LIST_ITEM_ACTIVE = 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-600 dark:border-blue-500 font-medium';
+const FILTER_LIST_ITEM_INACTIVE = 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-gray-100 dark:border-gray-600';
 
 function renderFilterSidebar(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     container.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-24">
-            <h3 class="text-sm font-semibold text-gray-700 mb-4">Bộ lọc</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sticky top-24 transition-colors">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Bộ lọc</h3>
             <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-500 mb-2">Danh mục</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Danh mục</label>
                 <input type="hidden" id="categoryFilter" value="">
                 <ul id="categoryFilterList" class="space-y-0.5" role="list">
                     <!-- Items rendered by loadFilterOptions -->

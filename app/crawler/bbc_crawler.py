@@ -6,7 +6,14 @@ from app.models import Article
 from app.database import get_existing_links
 from .base_rss import fetch_feed, take_first_new
 
-BBC_CATEGORIES = ["Tin thế giới", "Kinh tế", "Công nghệ"]
+BBC_CATEGORIES = [
+    "Tin thế giới",
+    "Kinh tế",
+    "Công nghệ",
+    "Khoa học & Môi trường",
+    "Sức khỏe",
+    "Thể thao",
+]
 
 
 def crawl_bbc() -> List[Article]:

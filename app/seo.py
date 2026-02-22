@@ -3,9 +3,13 @@ SEO utilities for all pages. Provides professional meta titles, descriptions,
 keywords, and Open Graph data for consistent, crawl-friendly content.
 """
 import re
-from typing import Optional, Any
+from typing import Optional, Any, List
 from dataclasses import dataclass
 
+try:
+    from app.config.settings import RSS_FEEDS_BY_CATEGORY
+except ImportError:
+    RSS_FEEDS_BY_CATEGORY = {}
 
 # Site branding (can be overridden via env if needed)
 SITE_NAME = "News AI"
@@ -13,6 +17,17 @@ SITE_TAGLINE = "Tin tức thông minh - Tổng hợp & dịch bằng AI"
 DEFAULT_OG_IMAGE = "/static/img/og-default.png"  # optional fallback
 META_DESC_MAX_LEN = 160
 KEYWORDS_HOME = "tin tức, news, AI, dịch tin tức, tổng hợp tin, tin thế giới, kinh tế, công nghệ, crypto"
+
+# All category names for "all categories" SEO (from config)
+def _all_category_names() -> List[str]:
+    return list(RSS_FEEDS_BY_CATEGORY.keys()) if RSS_FEEDS_BY_CATEGORY else []
+
+
+def _keywords_all_categories() -> str:
+    cats = _all_category_names()
+    if not cats:
+        return KEYWORDS_HOME
+    return ", ".join(cats) + ", " + KEYWORDS_HOME
 
 
 @dataclass
@@ -124,13 +139,22 @@ def get_seo_for_page(
         )
 
     if page_type == "category":
-        cat_name = category or "Tin tức"
-        seo_title = f"{cat_name} | {SITE_NAME}"
-        seo_desc = f"Tin tức mới nhất về {cat_name}. Tổng hợp và dịch sang tiếng Việt bởi {SITE_NAME}."
-        keywords = f"{cat_name}, tin tức, {KEYWORDS_HOME}"
+        cat_name = (category or "").strip()
+        if not cat_name:
+            # All categories view
+            seo_title = f"Tất cả chuyên mục | {SITE_NAME}"
+            seo_desc = (
+                f"Xem tin tức tất cả chuyên mục: thế giới, kinh tế, công nghệ, khoa học, sức khỏe, thể thao, crypto, AI. "
+                f"Tổng hợp và dịch sang tiếng Việt bởi {SITE_NAME}."
+            )
+            keywords = _keywords_all_categories()
+        else:
+            seo_title = f"{cat_name} | {SITE_NAME}"
+            seo_desc = f"Tin tức mới nhất về {cat_name}. Tổng hợp và dịch sang tiếng Việt bởi {SITE_NAME}."
+            keywords = f"{cat_name}, tin tức, {KEYWORDS_HOME}"
         return SEOData(
             title=seo_title,
-            description=seo_desc,
+            description=_truncate(seo_desc) if not cat_name else seo_desc,
             keywords=keywords,
             image=image or (base + DEFAULT_OG_IMAGE if base else None),
             canonical_url=canonical_url,

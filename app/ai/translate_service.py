@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from ollama import Client
 
-from app.config import OLLAMA_HOST, OLLAMA_MODEL, ENABLE_TRANSLATION
+from app.config import OLLAMA_BASE_URL, OLLAMA_MODEL, ENABLE_TRANSLATION
 
 # Chỉ chạy step 2 (format) khi bản dịch đủ dài; dưới ngưỡng này giữ nguyên bản dịch thô
 MIN_LENGTH_FOR_FORMAT = 400
@@ -14,7 +14,7 @@ MAX_CHARS_PER_CHUNK = 3500
 
 def _call_ollama(prompt: str, max_retries: int = 2) -> Optional[str]:
     """Gửi prompt tới Ollama và trả về nội dung phản hồi. Retry khi lỗi tạm thời."""
-    client = Client(host=OLLAMA_HOST)
+    client = Client(host=OLLAMA_BASE_URL)
     last_error = None
     for attempt in range(max_retries + 1):
         try:
