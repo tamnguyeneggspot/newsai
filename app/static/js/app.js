@@ -80,6 +80,16 @@ function setupEventListeners() {
         handleSearch(e);
     });
 
+    const doSearch = () => {
+        currentSearch = (searchInput && searchInput.value.trim()) || (searchInputMobile && searchInputMobile.value.trim()) || '';
+        currentPage = 1;
+        loadArticles();
+    };
+    const searchBtn = document.getElementById('searchBtn');
+    const searchBtnMobile = document.getElementById('searchBtnMobile');
+    if (searchBtn) searchBtn.addEventListener('click', doSearch);
+    if (searchBtnMobile) searchBtnMobile.addEventListener('click', doSearch);
+
     pageSizeSelect.addEventListener('change', () => {
         pageSize = parseInt(pageSizeSelect.value);
         currentPage = 1;

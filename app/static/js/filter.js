@@ -6,7 +6,9 @@
  * - getFilterState() — đọc category hiện tại từ DOM
  */
 
-const FILTER_SELECT_CLASS = 'w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+const FILTER_LIST_ITEM_BASE = 'block w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer border-l-2 border-transparent';
+const FILTER_LIST_ITEM_ACTIVE = 'bg-blue-50 text-blue-700 border-blue-600 font-medium';
+const FILTER_LIST_ITEM_INACTIVE = 'text-gray-700 hover:bg-gray-50 border-gray-100';
 
 function renderFilterSidebar(containerId) {
     const container = document.getElementById(containerId);
@@ -15,37 +17,83 @@ function renderFilterSidebar(containerId) {
     container.innerHTML = `
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-24">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">Bộ lọc</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1.5">Danh mục</label>
-                    <select id="categoryFilter" class="${FILTER_SELECT_CLASS}">
-                        <option value="">Tất cả danh mục</option>
-                    </select>
-                </div>
+            <div class="space-y-1">
+                <label class="block text-xs font-medium text-gray-500 mb-2">Danh mục</label>
+                <input type="hidden" id="categoryFilter" value="">
+                <ul id="categoryFilterList" class="space-y-0.5" role="list">
+                    <!-- Items rendered by loadFilterOptions -->
+                </ul>
             </div>
         </div>
     `;
 }
 
-async function generateFilterOption(selectEl, apiUrl, defaultLabel, currentValue) {
-    if (!selectEl) return;
+function setCategoryFilterValue(value) {
+    const hidden = document.getElementById('categoryFilter');
+    if (hidden) hidden.value = value || '';
+    updateCategoryListActiveState(value);
+}
+
+function updateCategoryListActiveState(activeValue) {
+    const list = document.getElementById('categoryFilterList');
+    if (!list) return;
+    const items = list.querySelectorAll('[data-category-value]');
+    items.forEach(el => {
+        const val = el.getAttribute('data-category-value') || '';
+        const isActive = (activeValue || '') === (val || '');
+        el.className = FILTER_LIST_ITEM_BASE + ' ' + (isActive ? FILTER_LIST_ITEM_ACTIVE : FILTER_LIST_ITEM_INACTIVE);
+        el.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+}
+
+async function generateFilterOption(listEl, apiUrl, defaultLabel, currentValue) {
+    if (!listEl) return;
+    const hidden = document.getElementById('categoryFilter');
     const response = await fetch(apiUrl);
     const items = await response.json();
-    selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
-    items.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.name;
-        option.textContent = `${item.name} (${item.count})`;
-        selectEl.appendChild(option);
+
+    if (hidden) hidden.value = currentValue || '';
+
+    const fragment = document.createDocumentFragment();
+
+    const allItem = document.createElement('li');
+    allItem.setAttribute('role', 'option');
+    allItem.setAttribute('data-category-value', '');
+    allItem.className = FILTER_LIST_ITEM_BASE + ' ' + (!currentValue ? FILTER_LIST_ITEM_ACTIVE : FILTER_LIST_ITEM_INACTIVE);
+    allItem.setAttribute('aria-selected', !currentValue ? 'true' : 'false');
+    allItem.textContent = defaultLabel;
+    allItem.addEventListener('click', function () {
+        if (hidden) hidden.value = '';
+        updateCategoryListActiveState('');
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    if (currentValue) selectEl.value = currentValue;
+    fragment.appendChild(allItem);
+
+    items.forEach(item => {
+        const li = document.createElement('li');
+        li.setAttribute('role', 'option');
+        li.setAttribute('data-category-value', item.name);
+        const isActive = currentValue === item.name;
+        li.className = FILTER_LIST_ITEM_BASE + ' ' + (isActive ? FILTER_LIST_ITEM_ACTIVE : FILTER_LIST_ITEM_INACTIVE);
+        li.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        li.textContent = `${item.name} (${item.count})`;
+        li.addEventListener('click', function () {
+            if (hidden) hidden.value = item.name;
+            updateCategoryListActiveState(item.name);
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        fragment.appendChild(li);
+    });
+
+    listEl.innerHTML = '';
+    listEl.appendChild(fragment);
 }
 
 async function loadFilterOptions(initialState) {
     const state = initialState || {};
-    const categoryFilter = document.getElementById('categoryFilter');
-    if (categoryFilter) {
-        await generateFilterOption(categoryFilter, '/api/categories', 'Tất cả danh mục', state.category);
+    const listEl = document.getElementById('categoryFilterList');
+    if (listEl) {
+        await generateFilterOption(listEl, '/api/categories', 'Tất cả danh mục', state.category);
     }
 }
 
