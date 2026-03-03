@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng dẫn sử dụng - Tin tức thông minh | News AI</title>
+    <meta name="description" content="Hướng dẫn sử dụng News AI: lọc chuyên mục, tìm kiếm tin tức, đọc tin thế giới bằng tiếng Việt. Cách lọc tin công nghệ, tin crypto, tin AI và đọc bài dịch bằng AI.">
+    <meta name="keywords" content="hướng dẫn News AI, tin tức thông minh, tổng hợp tin tức, tìm kiếm tin tức, lọc chuyên mục, đọc tin thế giới tiếng Việt">
+    <meta property="og:title" content="Hướng dẫn sử dụng - News AI">
+    <meta property="og:description" content="Hướng dẫn lọc chuyên mục, tìm kiếm và đọc tin tức thông minh trên News AI.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="News AI">
+    <meta property="og:image" content="https://www.aiti9.com/static/img/og-default.png">
+    <link rel="canonical" href="/guide">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Hướng dẫn sử dụng - News AI">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script>
+        (function(){
+            var t = localStorage.getItem('newsai-theme');
+            var dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (dark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+        })();
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: { 500: '#3b82f6', 600: '#2563eb' } }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans antialiased transition-colors" data-header-link-logo="true" data-header-show-stats="false">
+    <div id="header-container"></div>
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script>renderHeader({ linkLogo: true, showStats: false });</script>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <article class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8">
+            <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+                <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">Trang chủ</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700 dark:text-gray-300">Hướng dẫn</span>
+            </nav>
+
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-6">Hướng dẫn sử dụng News AI</h1>
+            <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
+                Cách sử dụng trang <strong>tin tức thông minh</strong>: lọc chuyên mục, tìm kiếm và đọc <strong>tin thế giới bằng tiếng Việt</strong>, tin công nghệ, tin crypto, tin AI.
+            </p>
+
+            <div class="space-y-8 text-gray-700 dark:text-gray-300 leading-relaxed">
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">1. Trang chủ và danh sách tin</h2>
+                    <p>
+                        Trang chủ hiển thị <strong>tổng hợp tin tức</strong> mới nhất từ nhiều nguồn. Bạn sẽ thấy tin nổi bật và danh sách bài theo thời gian.
+                        Mỗi thẻ bài viết có ảnh, tiêu đề, chuyên mục và đoạn tóm tắt – bấm vào bài để đọc nội dung đầy đủ đã được <strong>dịch tin tức bằng AI</strong> sang tiếng Việt.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">2. Lọc theo chuyên mục</h2>
+                    <p>
+                        Thanh lọc bên trái (trên mobile có thể thu gọn) cho phép chọn chuyên mục: <strong>Tin thế giới</strong>, <strong>Kinh tế</strong>,
+                        <strong>Công nghệ</strong>, <strong>Crypto</strong>, <strong>AI</strong>, Reuters World và các mục khác. Chọn một chuyên mục để chỉ xem tin trong mục đó – tiện khi bạn muốn đọc <strong>tin công nghệ</strong>, <strong>tin crypto</strong> hay <strong>tin AI</strong>.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">3. Tìm kiếm tin tức</h2>
+                    <p>
+                        Ô tìm kiếm ở đầu trang dùng để tìm bài theo từ khóa. Nhập từ khóa tiếng Việt (hoặc tiếng Anh) và nhấn tìm kiếm để xem kết quả.
+                        Hữu ích khi bạn cần tìm tin về một chủ đề cụ thể trong <strong>tổng hợp tin tức</strong> của chúng tôi.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">4. Đọc bài viết</h2>
+                    <p>
+                        Khi mở một bài viết, bạn sẽ thấy tiêu đề, ngày đăng, nguồn tin và nội dung đã dịch sang tiếng Việt.
+                        Cuối bài có thể có các bài viết cùng chuyên mục hoặc liên quan để bạn tiếp tục đọc <strong>tin thế giới tiếng Việt</strong>, tin công nghệ, tin crypto, tin AI.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">5. Chế độ sáng / tối</h2>
+                    <p>
+                        Nút chuyển giao diện sáng/tối ở góc header giúp bạn đọc thoải mái hơn trong môi trường thiếu sáng hoặc tùy sở thích.
+                    </p>
+                </section>
+            </div>
+
+            <p class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+                <a href="/" class="text-blue-600 dark:text-blue-400 font-medium hover:underline">← Trang chủ</a>
+                &nbsp;·&nbsp;
+                <a href="/about" class="text-blue-600 dark:text-blue-400 font-medium hover:underline">Giới thiệu</a>
+                &nbsp;·&nbsp;
+                <a href="/faq" class="text-blue-600 dark:text-blue-400 font-medium hover:underline">Câu hỏi thường gặp</a>
+            </p>
+        </article>
+    </main>
+
+    <div id="footer-container"></div>
+    <script src="/static/js/footer.js"></script>
+    <script>renderFooter();</script>
+</body>
+</html>

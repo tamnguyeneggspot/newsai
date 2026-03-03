@@ -18,7 +18,7 @@ function renderHeader(options) {
             </svg>
         </div>
         <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">News AI</h1>
+            <span class="text-xl font-bold text-gray-900 dark:text-white" aria-hidden="true">News AI</span>
             <p class="text-xs text-gray-500 dark:text-gray-400">Tin tức thông minh</p>
         </div>`;
 
@@ -37,19 +37,19 @@ function renderHeader(options) {
                     <div class="flex gap-2 w-full">
                         <div class="relative flex-1 min-w-0">
                             <input type="text" id="searchInput"
-                                class="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600 transition-all"
+                                class="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-gray-100 dark:bg-gray-700 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600 transition-all"
                                 placeholder="Tìm kiếm tin tức...">
                             <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </div>
-                        <button type="button" id="searchBtn" title="Tìm kiếm" class="flex-shrink-0 p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center justify-center">
+                        <button type="button" id="searchBtn" title="Tìm kiếm" aria-label="Tìm kiếm" class="flex-shrink-0 min-h-[44px] min-w-[44px] p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center justify-center">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </button>
                     </div>
-                    <button type="button" id="themeToggle" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" class="flex-shrink-0 p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <button type="button" id="themeToggle" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" class="flex-shrink-0 min-h-[44px] min-w-[44px] p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center">
                         <svg id="themeIconLight" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         <svg id="themeIconDark" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     </button>
@@ -61,19 +61,19 @@ function renderHeader(options) {
         <div class="flex gap-2 flex-1">
             <div class="relative flex-1 min-w-0">
                 <input type="text" id="searchInputMobile"
-                    class="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    class="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-gray-100 dark:bg-gray-700 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
                     placeholder="Tìm kiếm tin tức...">
                 <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
-            <button type="button" id="searchBtnMobile" title="Tìm kiếm" class="flex-shrink-0 p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center justify-center">
+            <button type="button" id="searchBtnMobile" title="Tìm kiếm" aria-label="Tìm kiếm" class="flex-shrink-0 min-h-[44px] min-w-[44px] p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </button>
         </div>
-        <button type="button" id="themeToggleMobile" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" class="flex-shrink-0 p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button type="button" id="themeToggleMobile" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" class="flex-shrink-0 min-h-[44px] min-w-[44px] p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center">
             <svg id="themeIconLightMobile" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
             <svg id="themeIconDarkMobile" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>

@@ -8,7 +8,7 @@ if str(_root) not in sys.path:
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -67,11 +67,53 @@ async def home(request: Request):
 
 @app.get("/article", response_class=HTMLResponse)
 async def article_page(request: Request):
-    """Serve the article detail page (standalone, not hash)."""
+    """Serve the article detail page (no id; client may redirect to canonical /article/{id})."""
     html_file = STATIC_DIR / "article.html"
     if html_file.exists():
         return HTMLResponse(content=html_file.read_text(encoding="utf-8"))
     return HTMLResponse(content="<h1>Article page not found</h1>")
+
+
+@app.get("/article/{article_id}", response_class=HTMLResponse)
+async def article_by_id(request: Request, article_id: str):
+    """Serve the article detail page for /article/{id} (same HTML; JS loads article by id)."""
+    html_file = STATIC_DIR / "article.html"
+    if html_file.exists():
+        return HTMLResponse(content=html_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Article page not found</h1>")
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    """Serve the About page (SEO 3.3 – Nội dung bổ sung)."""
+    html_file = STATIC_DIR / "about.html"
+    if html_file.exists():
+        return HTMLResponse(content=html_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>About page not found</h1>")
+
+
+@app.get("/guide", response_class=HTMLResponse)
+async def guide_page(request: Request):
+    """Serve the Guide page (SEO 3.3 – Nội dung bổ sung)."""
+    html_file = STATIC_DIR / "guide.html"
+    if html_file.exists():
+        return HTMLResponse(content=html_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Guide page not found</h1>")
+
+
+@app.get("/faq", response_class=HTMLResponse)
+async def faq_page(request: Request):
+    """Serve the FAQ page (SEO 3.3 – Nội dung bổ sung)."""
+    html_file = STATIC_DIR / "faq.html"
+    if html_file.exists():
+        return HTMLResponse(content=html_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>FAQ page not found</h1>")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Redirect browser favicon request to the PNG in static."""
+    return RedirectResponse(url="/static/img/favicon.png", status_code=302)
 
 
 @app.get("/health")

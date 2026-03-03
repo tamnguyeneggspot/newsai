@@ -16,7 +16,16 @@ SITE_NAME = "News AI"
 SITE_TAGLINE = "Tin tức thông minh - Tổng hợp & dịch bằng AI"
 DEFAULT_OG_IMAGE = "/static/img/og-default.png"  # optional fallback
 META_DESC_MAX_LEN = 160
-KEYWORDS_HOME = "tin tức, news, AI, dịch tin tức, tổng hợp tin, tin thế giới, kinh tế, công nghệ, crypto"
+# Phase 3.1: Từ khóa mục tiêu chính (tin tức thông minh, tổng hợp tin tức, dịch tin tức bằng AI, tin thế giới tiếng Việt, tin công nghệ, tin crypto, tin AI)
+KEYWORDS_HOME = "tin tức thông minh, tổng hợp tin tức, dịch tin tức bằng AI, tin thế giới tiếng Việt, tin công nghệ, tin crypto, tin AI, tin tức, kinh tế"
+
+# Phase 3.2: Mô tả chuyên mục có long-tail (đọc tin thế giới bằng tiếng Việt, tin tức công nghệ dịch sang tiếng Việt, tổng hợp tin crypto AI, tin tức BBC dịch tiếng Việt)
+CATEGORY_SEO_DESCRIPTIONS = {
+    "Tin thế giới": "Đọc tin thế giới bằng tiếng Việt. Tin tức BBC dịch tiếng Việt, Reuters và các nguồn quốc tế uy tín.",
+    "Công nghệ": "Tin tức công nghệ dịch sang tiếng Việt. Tin công nghệ, phần mềm, thiết bị từ nguồn uy tín.",
+    "Crypto": "Tổng hợp tin crypto AI, tiền điện tử, blockchain. Tin crypto dịch sang tiếng Việt.",
+    "Reuters World": "Đọc tin thế giới bằng tiếng Việt từ Reuters. Tin tức BBC dịch tiếng Việt và nguồn quốc tế.",
+}
 
 # All category names for "all categories" SEO (from config)
 def _all_category_names() -> List[str]:
@@ -102,10 +111,10 @@ def get_seo_for_page(
         image = (base + image) if base else image
 
     if page_type == "home":
-        seo_title = f"{SITE_NAME} - {SITE_TAGLINE}"
+        seo_title = f"{SITE_NAME} - {SITE_TAGLINE}"  # Title: "tin tức thông minh", "tổng hợp"
         seo_desc = (
-            "Nền tảng tổng hợp tin tức đa nguồn với dịch tự động sang tiếng Việt. "
-            "Cập nhật tin thế giới, kinh tế, công nghệ và crypto từ các nguồn uy tín."
+            "Đọc tin thế giới bằng tiếng Việt. Tin tức thông minh – tổng hợp tin tức, tin tức công nghệ dịch sang tiếng Việt, "
+            "tổng hợp tin crypto AI. Tin tức BBC dịch tiếng Việt từ nguồn uy tín."
         )
         keywords = KEYWORDS_HOME
         return SEOData(
@@ -150,7 +159,9 @@ def get_seo_for_page(
             keywords = _keywords_all_categories()
         else:
             seo_title = f"{cat_name} | {SITE_NAME}"
-            seo_desc = f"Tin tức mới nhất về {cat_name}. Tổng hợp và dịch sang tiếng Việt bởi {SITE_NAME}."
+            seo_desc = CATEGORY_SEO_DESCRIPTIONS.get(
+                cat_name, f"Tin tức mới nhất về {cat_name}. Tổng hợp và dịch sang tiếng Việt bởi {SITE_NAME}."
+            )
             keywords = f"{cat_name}, tin tức, {KEYWORDS_HOME}"
         return SEOData(
             title=seo_title,
@@ -219,3 +230,98 @@ def seo_to_dict(seo: SEOData) -> dict:
     if seo.article_section:
         d["article_section"] = seo.article_section
     return d
+
+
+# --- Sitemap & robots (SEO Phase 2.3) ---
+
+def build_sitemap_xml(
+    base_url: str,
+    articles: List[Any],
+    categories: Optional[List[str]] = None,
+) -> str:
+    """
+    Build sitemap.xml content (URL set).
+    - base_url: e.g. https://yoursite.com (no trailing slash).
+    - articles: list of dicts with _id and optional published (datetime or ISO str).
+    - categories: list of category names for /?category=... (default from RSS_FEEDS_BY_CATEGORY).
+    """
+    from datetime import datetime
+    from urllib.parse import quote
+
+    base = (base_url or "").rstrip("/")
+    if categories is None:
+        categories = _all_category_names()
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Trang chủ
+    lines.append("  <url>")
+    lines.append(f"    <loc>{base}/</loc>")
+    lines.append(f"    <lastmod>{today}</lastmod>")
+    lines.append("    <changefreq>daily</changefreq>")
+    lines.append("    <priority>1.0</priority>")
+    lines.append("  </url>")
+
+    # Trang chuyên mục
+    for cat in categories:
+        loc = f"{base}/?category={quote(cat)}"
+        lines.append("  <url>")
+        lines.append(f"    <loc>{loc}</loc>")
+        lines.append(f"    <lastmod>{today}</lastmod>")
+        lines.append("    <changefreq>daily</changefreq>")
+        lines.append("    <priority>0.8</priority>")
+        lines.append("  </url>")
+
+    # Trang nội dung bổ sung (SEO 3.3)
+    for path in ["/about", "/guide", "/faq"]:
+        lines.append("  <url>")
+        lines.append(f"    <loc>{base}{path}</loc>")
+        lines.append(f"    <lastmod>{today}</lastmod>")
+        lines.append("    <changefreq>monthly</changefreq>")
+        lines.append("    <priority>0.6</priority>")
+        lines.append("  </url>")
+
+    # Bài viết
+    for doc in articles:
+        aid = doc.get("_id")
+        if aid is None:
+            continue
+        article_id = str(aid)
+        loc = f"{base}/article/{quote(article_id)}"
+        pub = doc.get("published")
+        if pub:
+            if hasattr(pub, "strftime"):
+                lastmod = pub.strftime("%Y-%m-%d")
+            else:
+                lastmod = str(pub)[:10] if len(str(pub)) >= 10 else today
+        else:
+            lastmod = today
+        lines.append("  <url>")
+        lines.append(f"    <loc>{loc}</loc>")
+        lines.append(f"    <lastmod>{lastmod}</lastmod>")
+        lines.append("    <changefreq>weekly</changefreq>")
+        lines.append("    <priority>0.7</priority>")
+        lines.append("  </url>")
+
+    lines.append("</urlset>")
+    return "\n".join(lines)
+
+
+def build_robots_txt(base_url: str) -> str:
+    """
+    Build robots.txt content: allow /, disallow /api/, point to sitemap.
+    base_url: e.g. https://yoursite.com (no trailing slash).
+    """
+    base = (base_url or "").rstrip("/")
+    return f"""User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /health
+
+Sitemap: {base}/sitemap.xml
+"""

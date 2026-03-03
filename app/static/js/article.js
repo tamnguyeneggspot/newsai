@@ -1,7 +1,22 @@
 /**
  * Article page: load article by id, render content, share bar, related articles.
+ * URL structure: /article/{id} (friendly). Legacy /article?id= redirects to canonical.
  * Depends on: filter.js (renderFilterSidebar, loadFilterOptions, getFilterState), seo.js (setPageSEO).
  */
+
+/** Get article id from URL: path /article/{id} or query ?id= */
+function getArticleIdFromUrl() {
+    var path = window.location.pathname || '';
+    var match = path.match(/^\/article\/([^/]+)\/?$/);
+    if (match) return decodeURIComponent(match[1]);
+    var params = new URLSearchParams(window.location.search);
+    return params.get('id') || null;
+}
+
+/** Canonical article URL (friendly): /article/{id} */
+function getArticleUrl(id) {
+    return window.location.origin + '/article/' + encodeURIComponent(id);
+}
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -46,8 +61,7 @@ function markdownToHtml(text) {
 }
 
 async function loadArticle() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
+    var id = getArticleIdFromUrl();
     if (!id) {
         document.getElementById('articlePageContent').innerHTML = `
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center">
@@ -55,6 +69,11 @@ async function loadArticle() {
                 <a href="/" class="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:underline">Quay lại danh sách</a>
             </div>`;
         return;
+    }
+    // Redirect legacy /article?id=xxx to canonical /article/xxx (no reload)
+    var path = window.location.pathname || '';
+    if (window.location.search.indexOf('id=') !== -1 && !/^\/article\/[^/]+\/?$/.test(path)) {
+        window.history.replaceState(null, '', getArticleUrl(id));
     }
     try {
         const res = await fetch('/api/articles/' + encodeURIComponent(id));
@@ -68,6 +87,7 @@ async function loadArticle() {
             return;
         }
         renderArticle(article);
+        injectArticleStructuredData(article);
         var base = window.location.origin;
         var displayTitle = article.title_vn || article.title;
         var rawDesc = (article.summary_vn || article.summary || article.content || article.content_VN || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -75,9 +95,9 @@ async function loadArticle() {
         setPageSEO({
             title: (displayTitle || 'Bài viết') + ' | News AI',
             description: desc || (displayTitle || 'Đọc bài viết trên News AI.'),
-            keywords: (article.category ? article.category + ', ' : '') + 'tin tức, news, AI, dịch tin tức, tổng hợp tin',
+            keywords: (article.category ? article.category + ', ' : '') + 'tin tức thông minh, tổng hợp tin tức, tin công nghệ, tin crypto, tin AI, dịch tin tức bằng AI',
             image: article.content_top_image || article.thumbnail || '',
-            canonical_url: base + '/article?id=' + encodeURIComponent(article.id),
+            canonical_url: getArticleUrl(article.id),
             og_type: 'article',
             article_published_time: article.published ? new Date(article.published).toISOString() : undefined,
             article_author: article.source || undefined,
@@ -94,23 +114,91 @@ async function loadArticle() {
     }
 }
 
+function injectArticleStructuredData(article) {
+    var base = window.location.origin;
+    var displayTitle = article.title_vn || article.title;
+    var canonicalUrl = getArticleUrl(article.id);
+    var heroImage = article.content_top_image || article.thumbnail || (base + '/static/img/og-default.png');
+    if (heroImage && !/^https?:\/\//i.test(heroImage)) heroImage = base + (heroImage.indexOf('/') === 0 ? heroImage : '/' + heroImage);
+    var publishedIso = article.published ? new Date(article.published).toISOString() : null;
+    var category = article.category || 'Tin tức';
+    var categoryUrl = base + '/?category=' + encodeURIComponent(category);
+
+    function removeJsonLd(id) {
+        var el = document.getElementById(id);
+        if (el) el.remove();
+    }
+    removeJsonLd('breadcrumb-json-ld');
+    removeJsonLd('article-json-ld');
+
+    var breadcrumbList = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: base + '/' },
+            { '@type': 'ListItem', position: 2, name: category, item: categoryUrl },
+            { '@type': 'ListItem', position: 3, name: displayTitle, item: canonicalUrl }
+        ]
+    };
+    var scriptBreadcrumb = document.createElement('script');
+    scriptBreadcrumb.id = 'breadcrumb-json-ld';
+    scriptBreadcrumb.type = 'application/ld+json';
+    scriptBreadcrumb.textContent = JSON.stringify(breadcrumbList);
+    document.head.appendChild(scriptBreadcrumb);
+
+    var newsArticle = {
+        '@context': 'https://schema.org',
+        '@type': 'NewsArticle',
+        headline: displayTitle,
+        url: canonicalUrl,
+        image: [heroImage],
+        datePublished: publishedIso,
+        publisher: { '@type': 'Organization', name: 'News AI', url: base + '/' }
+    };
+    var modifiedIso = article.updated || article.modified ? new Date(article.updated || article.modified).toISOString() : null;
+    if (modifiedIso) newsArticle.dateModified = modifiedIso;
+    if (article.source) newsArticle.author = { '@type': 'Organization', name: article.source };
+    if (article.summary_vn || article.summary) newsArticle.description = (article.summary_vn || article.summary).replace(/<[^>]+>/g, ' ').trim().slice(0, 200);
+    var scriptArticle = document.createElement('script');
+    scriptArticle.id = 'article-json-ld';
+    scriptArticle.type = 'application/ld+json';
+    scriptArticle.textContent = JSON.stringify(newsArticle);
+    document.head.appendChild(scriptArticle);
+}
+
 function renderArticle(article) {
     const displayTitle = article.title_vn || article.title;
     document.title = escapeHtml(displayTitle) + ' - News AI';
     const publishedDate = article.published ? new Date(article.published).toLocaleDateString('vi-VN', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     }) : '';
+    const publishedIso = article.published ? new Date(article.published).toISOString() : '';
     const heroImage = article.content_top_image || article.thumbnail || 'https://picsum.photos/seed/' + encodeURIComponent(displayTitle) + '/1200/600';
     const content = article.content_VN || article.content || (article.summary_vn || article.summary) || 'Không có nội dung chi tiết.';
-    const shareUrl = window.location.origin + '/article?id=' + encodeURIComponent(article.id);
+    const shareUrl = getArticleUrl(article.id);
     const shareTitle = displayTitle;
     var rawDesc = (article.summary_vn || article.summary || article.content || article.content_VN || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const shareDescription = rawDesc.length > 160 ? rawDesc.slice(0, 157).replace(/\s+\S*$/, '') + '...' : rawDesc;
 
+    const base = window.location.origin;
+    const category = article.category || 'Tin tức';
+    const categoryUrl = base + '/?category=' + encodeURIComponent(category);
+    const breadcrumbHtml = `
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <li><a href="/" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Trang chủ</a></li>
+                <li aria-hidden="true">/</li>
+                <li><a href="${escapeHtml(categoryUrl)}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">${escapeHtml(category)}</a></li>
+                <li aria-hidden="true">/</li>
+                <li class="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px] sm:max-w-none" aria-current="page">${escapeHtml(displayTitle)}</li>
+            </ol>
+        </nav>`;
+
     document.getElementById('articlePageContent').innerHTML = `
+        ${breadcrumbHtml}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
             <div class="relative">
-                <img src="${escapeHtml(heroImage)}" alt="${escapeHtml(displayTitle)}"
+                <img src="${escapeHtml(heroImage)}" alt="${escapeHtml(displayTitle)}" loading="lazy"
                     class="w-full h-72 sm:h-96 object-cover"
                     onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%221200%22 height=%22600%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext fill=%22%239ca3af%22 font-family=%22sans-serif%22 font-size=%2224%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
@@ -126,16 +214,16 @@ function renderArticle(article) {
                 <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
                     <span class="flex items-center">
                         <svg class="w-5 h-5 mr-2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        ${escapeHtml(publishedDate)}
+                        ${publishedIso ? '<time datetime="' + escapeHtml(publishedIso) + '">' + escapeHtml(publishedDate) + '</time>' : escapeHtml(publishedDate)}
                     </span>
                     <span class="text-gray-400 dark:text-gray-500">|</span>
-                    <div class="flex items-center gap-2" id="articleShareBar" data-share-url="${escapeHtml(shareUrl)}" data-share-title="${escapeHtml(shareTitle)}" data-share-description="${escapeHtml(shareDescription)}">
+                    <div class="flex items-center gap-2 flex-wrap" id="articleShareBar" data-share-url="${escapeHtml(shareUrl)}" data-share-title="${escapeHtml(shareTitle)}" data-share-description="${escapeHtml(shareDescription)}">
                         <span class="text-gray-600 dark:text-gray-300 font-medium">Chia sẻ:</span>
-                        <a href="#" data-share="facebook" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Chia sẻ lên Facebook" aria-label="Chia sẻ Facebook"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-                        <a href="#" data-share="twitter" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 hover:text-sky-500 dark:hover:text-sky-400 transition-colors" title="Chia sẻ lên X (Twitter)" aria-label="Chia sẻ X"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-                        <a href="#" data-share="zalo" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Chia sẻ qua Zalo" aria-label="Chia sẻ Zalo"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></a>
-                        <a href="#" data-share="linkedin" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-[#0a66c2] transition-colors" title="Chia sẻ lên LinkedIn" aria-label="Chia sẻ LinkedIn"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
-                        <button type="button" data-share="copy" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer border-0" title="Sao chép link" aria-label="Sao chép link"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg></button>
+                        <a href="#" data-share="facebook" class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Chia sẻ lên Facebook" aria-label="Chia sẻ Facebook"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                        <a href="#" data-share="twitter" class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 hover:text-sky-500 dark:hover:text-sky-400 transition-colors" title="Chia sẻ lên X (Twitter)" aria-label="Chia sẻ X"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                        <a href="#" data-share="zalo" class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Chia sẻ qua Zalo" aria-label="Chia sẻ Zalo"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></a>
+                        <a href="#" data-share="linkedin" class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-[#0a66c2] transition-colors" title="Chia sẻ lên LinkedIn" aria-label="Chia sẻ LinkedIn"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+                        <button type="button" data-share="copy" class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer border-0" title="Sao chép link" aria-label="Sao chép link"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg></button>
                     </div>
                 </div>
                 <div class="prose prose-lg prose-gray dark:prose-invert max-w-none">
@@ -218,10 +306,10 @@ async function loadRelatedArticles(category, excludeId) {
         grid.innerHTML = related.map(function(article) {
             const displayTitle = article.title_vn || article.title;
             const thumbnail = article.thumbnail || 'https://picsum.photos/seed/' + encodeURIComponent(displayTitle) + '/400/240';
-            const url = '/article?id=' + encodeURIComponent(article.id);
+            const url = '/article/' + encodeURIComponent(article.id);
             return '<a href="' + escapeHtml(url) + '" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all block group">' +
                 '<div class="relative h-32 overflow-hidden">' +
-                '<img src="' + escapeHtml(thumbnail) + '" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"' +
+                '<img src="' + escapeHtml(thumbnail) + '" alt="' + escapeHtml(displayTitle) + '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"' +
                 ' onerror="this.onerror=null;this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22240%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%25%22 height=%22100%25%22/%3E%3C/svg%3E\'">' +
                 '</div>' +
                 '<div class="p-3">' +

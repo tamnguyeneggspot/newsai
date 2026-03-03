@@ -132,11 +132,18 @@ def run_translate_title_summary(limit: int = 0) -> int:
     col = get_articles_collection()
 
     query = {
-        "$or": [
-            {"title_vn": None},
-            {"title_vn": {"$exists": False}},
-            {"summary_vn": None},
-            {"summary_vn": {"$exists": False}},
+        "$and": [
+            {
+                "$or": [
+                    {"title_vn": None},
+                    {"title_vn": {"$exists": False}},
+                    {"summary_vn": None},
+                    {"summary_vn": {"$exists": False}},
+                ]
+            },
+            {"content_vn": {"$exists": True, "$nin": [None, ""]}},
+            {"title": {"$exists": True, "$nin": [None, ""]}},
+            {"summary": {"$exists": True, "$nin": [None, ""]}},
         ]
     }
 

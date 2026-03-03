@@ -46,9 +46,19 @@ function renderFooter(options) {
 
             <!-- Bottom bar -->
             <div class="border-t border-gray-800 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p class="text-sm text-gray-500">
-                    &copy; ${year} ${escapeHtml(companyName)}. Powered by AI Translation.
-                </p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <p class="text-sm text-gray-500">
+                        &copy; ${year} ${escapeHtml(companyName)}. Powered by AI Translation.
+                    </p>
+                    <span class="text-gray-600 dark:text-gray-500 hidden sm:inline">|</span>
+                    <nav class="text-sm text-gray-400" aria-label="Liên kết trang">
+                        <a href="/about" class="hover:text-white transition-colors">Giới thiệu</a>
+                        <span class="mx-2 text-gray-600">·</span>
+                        <a href="/guide" class="hover:text-white transition-colors">Hướng dẫn</a>
+                        <span class="mx-2 text-gray-600">·</span>
+                        <a href="/faq" class="hover:text-white transition-colors">FAQ</a>
+                    </nav>
+                </div>
                 ${showTechStack ? '<p class="text-xs text-gray-500">FastAPI · MongoDB · Tailwind CSS</p>' : ''}
             </div>
         </div>

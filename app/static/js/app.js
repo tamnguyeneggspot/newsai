@@ -7,7 +7,15 @@ let totalPages = 1;
 let currentCategory = '';
 let currentSearch = '';
 
-// DOM Elements
+// DOM Elements (SEO sections for Phase 1.1, 1.3, 1.4)
+let homeIntroSection;
+let categoryIntroSection;
+let categoryPageSection;
+let categoryPageTitle;
+let categoryPageDesc;
+let searchPageSection;
+let searchPageTitle;
+let searchPageDesc;
 let articlesGrid;
 let loadingSkeleton;
 let emptyState;
@@ -28,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderFilterSidebar('filterSidebarContainer');
     await loadFilterOptions({ category: currentCategory });
     initDomElements();
+    updateSEOHeaders(); // SEO: hiện/ẩn H1, H2 chuyên mục theo view (trang chủ / filter / search)
     if (isHomeView()) {
         await loadFeatured();
     } else {
@@ -39,6 +48,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Initialize DOM elements
 function initDomElements() {
+    homeIntroSection = document.getElementById('homeIntroSection');
+    categoryIntroSection = document.getElementById('categoryIntroSection');
+    categoryPageSection = document.getElementById('categoryPageSection');
+    categoryPageTitle = document.getElementById('categoryPageTitle');
+    categoryPageDesc = document.getElementById('categoryPageDesc');
+    searchPageSection = document.getElementById('searchPageSection');
+    searchPageTitle = document.getElementById('searchPageTitle');
+    searchPageDesc = document.getElementById('searchPageDesc');
     articlesGrid = document.getElementById('articlesGrid');
     loadingSkeleton = document.getElementById('loadingSkeleton');
     emptyState = document.getElementById('emptyState');
@@ -52,6 +69,47 @@ function initDomElements() {
     translatedArticlesEl = document.getElementById('translatedArticles');
     featuredSection = document.getElementById('featuredSection');
     featuredGrid = document.getElementById('featuredGrid');
+}
+
+// Mô tả ngắn theo chuyên mục (SEO 1.3, 3.2 – long-tail)
+const CATEGORY_DESCRIPTIONS = {
+    'Tin thế giới': 'Đọc tin thế giới bằng tiếng Việt. Tin tức BBC dịch tiếng Việt, Reuters và các nguồn quốc tế uy tín.',
+    'Kinh tế': 'Tin kinh tế, tài chính, thị trường. Tổng hợp và dịch sang tiếng Việt.',
+    'Công nghệ': 'Tin công nghệ, phần mềm, thiết bị. Tin tức công nghệ dịch sang tiếng Việt từ nguồn uy tín.',
+    'Khoa học & Môi trường': 'Tin khoa học, môi trường, nghiên cứu. Đọc tin khoa học có bản dịch tiếng Việt.',
+    'Sức khỏe': 'Tin sức khỏe, y tế, đời sống. Tổng hợp tin sức khỏe dịch sang tiếng Việt.',
+    'Thể thao': 'Tin thể thao trong nước và quốc tế. Đọc tin thể thao có bản dịch tiếng Việt.',
+    'Crypto': 'Tổng hợp tin crypto AI, tiền điện tử, blockchain. Tin crypto dịch sang tiếng Việt.',
+    'Robotics': 'Tin robot, tự động hóa, công nghệ robotics. Tin tức robotics dịch sang tiếng Việt.',
+    'AI': 'Tin AI, trí tuệ nhân tạo, machine learning. Tổng hợp tin AI dịch sang tiếng Việt.',
+    'Reuters World': 'Đọc tin thế giới bằng tiếng Việt từ Reuters. Tin tức BBC dịch tiếng Việt và nguồn quốc tế.',
+};
+
+// SEO: Hiện/ẩn section H1, H2 theo view (trang chủ / category / search – 1.4)
+function updateSEOHeaders() {
+    if (homeIntroSection) homeIntroSection.classList.add('hidden');
+    if (categoryIntroSection) categoryIntroSection.classList.add('hidden');
+    if (categoryPageSection) categoryPageSection.classList.add('hidden');
+    if (searchPageSection) searchPageSection.classList.add('hidden');
+
+    if (isHomeView()) {
+        if (homeIntroSection) homeIntroSection.classList.remove('hidden');
+        if (categoryIntroSection) categoryIntroSection.classList.remove('hidden');
+    } else if (currentSearch) {
+        // Trang tìm kiếm: H1 cho kết quả tìm kiếm (SEO 1.4)
+        if (searchPageSection && searchPageTitle) {
+            searchPageTitle.textContent = 'Kết quả tìm kiếm: ' + (currentSearch || '');
+            searchPageSection.classList.remove('hidden');
+        }
+    } else if (currentCategory) {
+        // Trang chuyên mục: H1 + mô tả ngắn (SEO 1.3)
+        if (categoryPageSection && categoryPageTitle && categoryPageDesc) {
+            categoryPageTitle.textContent = currentCategory;
+            categoryPageDesc.textContent = CATEGORY_DESCRIPTIONS[currentCategory] ||
+                'Tin tức mới nhất về ' + currentCategory + '. Tổng hợp và dịch sang tiếng Việt bởi News AI.';
+            categoryPageSection.classList.remove('hidden');
+        }
+    }
 }
 
 function isHomeView() {
@@ -91,7 +149,7 @@ function createFeaturedCard(article, index) {
     const div = document.createElement('div');
     div.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer fade-in';
     div.style.animationDelay = `${index * 80}ms`;
-    div.onclick = () => { window.location.href = '/article?id=' + encodeURIComponent(article.id); };
+    div.onclick = () => { window.location.href = '/article/' + encodeURIComponent(article.id); };
 
     const displayTitle = article.title_vn || article.title;
     const thumbnail = article.thumbnail || article.content_top_image || `https://picsum.photos/seed/${encodeURIComponent(displayTitle)}/400/240`;
@@ -106,7 +164,7 @@ function createFeaturedCard(article, index) {
 
     div.innerHTML = `
         <div class="relative h-44 sm:h-52 overflow-hidden">
-            <img src="${thumbnail}" alt="${escapeHtml(displayTitle)}"
+            <img src="${thumbnail}" alt="${escapeHtml(displayTitle)}" loading="lazy"
                 class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                 onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22240%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext fill=%22%239ca3af%22 font-family=%22sans-serif%22 font-size=%2216%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
             <div class="absolute top-3 left-3 flex flex-wrap gap-2">
@@ -166,6 +224,7 @@ function setupEventListeners() {
         if (searchInput) searchInput.value = '';
         if (searchInputMobile) searchInputMobile.value = '';
         updateUrlFromState();
+        updateSEOHeaders();
         if (!isHomeView()) hideFeatured();
         loadArticles();
     });
@@ -192,6 +251,11 @@ function setupEventListeners() {
         currentPage = 1;
         if (typeof setCategoryFilterValue === 'function') setCategoryFilterValue('');
         updateUrlFromState();
+        updateSEOHeaders();
+        // SEO 1.4: cập nhật title/meta cho trang tìm kiếm
+        if (typeof fetchAndSetSEO === 'function') {
+            fetchAndSetSEO({ page: 'search', search: currentSearch || undefined });
+        }
         if (!isHomeView()) hideFeatured();
         loadArticles();
     };
@@ -290,7 +354,7 @@ function createArticleCard(article, index) {
     const div = document.createElement('div');
     div.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer fade-in';
     div.style.animationDelay = `${index * 50}ms`;
-    div.onclick = () => { window.location.href = '/article?id=' + encodeURIComponent(article.id); };
+    div.onclick = () => { window.location.href = '/article/' + encodeURIComponent(article.id); };
 
     const displayTitle = article.title_vn || article.title;
     const thumbnail = article.thumbnail || `https://picsum.photos/seed/${encodeURIComponent(displayTitle)}/400/240`;
@@ -305,7 +369,7 @@ function createArticleCard(article, index) {
 
     div.innerHTML = `
         <div class="relative h-48 overflow-hidden">
-            <img src="${thumbnail}" alt="${escapeHtml(displayTitle)}" 
+            <img src="${thumbnail}" alt="${escapeHtml(displayTitle)}" loading="lazy"
                 class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                 onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22240%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext fill=%22%239ca3af%22 font-family=%22sans-serif%22 font-size=%2216%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
             <div class="absolute top-3 left-3 flex flex-wrap gap-2">
@@ -351,6 +415,8 @@ function getCategoryColor(category) {
         'Sức khỏe': 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300',
         'Thể thao': 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
         'Crypto': 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300',
+        'Robotics': 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300',
+        'AI': 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300',
         'Reuters World': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
     };
     return colors[category] || 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300';
@@ -362,9 +428,10 @@ function renderPagination() {
 
     if (totalPages <= 1) return;
 
-    // Previous button
+    // Previous button (touch-friendly min 44px)
     const prevBtn = document.createElement('button');
-    prevBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === 1 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+    prevBtn.className = `min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-2 text-sm rounded-lg ${currentPage === 1 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+    prevBtn.setAttribute('aria-label', 'Trang trước');
     prevBtn.innerHTML = `
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -413,9 +480,10 @@ function renderPagination() {
         pagination.appendChild(createPageButton(totalPages));
     }
 
-    // Next button
+    // Next button (touch-friendly min 44px)
     const nextBtn = document.createElement('button');
-    nextBtn.className = `px-3 py-2 text-sm rounded-lg ${currentPage === totalPages ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+    nextBtn.className = `min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-2 text-sm rounded-lg ${currentPage === totalPages ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+    nextBtn.setAttribute('aria-label', 'Trang sau');
     nextBtn.innerHTML = `
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -432,14 +500,15 @@ function renderPagination() {
     pagination.appendChild(nextBtn);
 }
 
-// Create page button
+// Create page button (touch-friendly min 44px)
 function createPageButton(page) {
     const btn = document.createElement('button');
-    btn.className = `w-10 h-10 text-sm rounded-lg transition-colors ${
+    btn.className = `min-h-[44px] min-w-[44px] flex items-center justify-center text-sm rounded-lg transition-colors ${
         page === currentPage 
             ? 'bg-blue-600 text-white font-medium' 
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
     }`;
+    btn.setAttribute('aria-label', 'Trang ' + page);
     btn.textContent = page;
     btn.onclick = () => {
         currentPage = page;
