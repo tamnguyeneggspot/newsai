@@ -18,6 +18,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api import router as api_router
 from app.limiter import limiter
+from app.sitemap_robots import sitemap_robots_router
 
 app = FastAPI(
     title="News AI System",
@@ -49,6 +50,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(sitemap_robots_router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
