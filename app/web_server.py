@@ -55,6 +55,18 @@ STATIC_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Google Search Console verification (must be at root; register early)
+GOOGLE_VERIFICATION_CONTENT = "google-site-verification: googlea64e30f7786323f3.html"
+
+
+@app.get("/googlea64e30f7786323f3.html", response_class=HTMLResponse, include_in_schema=False)
+async def google_verification():
+    """Serve Google Search Console verification at root (required by Google)."""
+    path = STATIC_DIR / "googlea64e30f7786323f3.html"
+    if path.exists():
+        return HTMLResponse(content=path.read_text(encoding="utf-8"))
+    return HTMLResponse(content=GOOGLE_VERIFICATION_CONTENT)
+
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
